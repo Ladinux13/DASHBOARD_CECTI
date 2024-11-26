@@ -37,7 +37,7 @@ def APLICATIVOS_DETALLES(Tabla):
                                                                           'PTO_RIESGO', 'PREVE_OBS', 'DENUNCIAS',
                                                                           'NIVEL_ATENCION'])['APLICATIVO'].nunique().reset_index()
     
-    SISTEMA = Tabla[Tabla['NIVEL_ATENCION'].isin(NIVELES)].groupby(['NOMBRE_EMP','APLICATIVO'])['ROL_APP'].\
+    SISTEMA = Tabla[Tabla['NIVEL_ATENCION'].isin(NIVELES)].groupby(['NOMBRE_EMP','PUESTO_NOM','APLICATIVO'])['ROL_APP'].\
                           nunique().reset_index().sort_values(by=['ROL_APP'], ascending=False)
     
     return (DETALLE, SISTEMA)
@@ -67,6 +67,6 @@ def DENUNCIAS_INFO(Tabla):
 
     DENUNCIA_QUEJA = Tabla.D15.value_counts().reset_index().rename({'count':'VALUE'}, axis = 1)
 
-    PUESTOS = Tabla.D8.value_counts().reset_index().rename({'count':'VALUE'}, axis = 1)
+    PUESTOS = Tabla.D8.value_counts().reset_index().rename({'count':'VALUE'}, axis = 1)[:7]
 
-    return (FOLIOS, ASUNTOS, DENUNCIA_QUEJA, PUESTOS)
+    return (ASUNTOS, DENUNCIA_QUEJA, PUESTOS)

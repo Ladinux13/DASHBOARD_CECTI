@@ -30,6 +30,9 @@ from GRAFICAS_DASHBOARD import TABLA_DENU
 # 
 
 from CONTENEDORES_DASHBOARD import Contenedor_Titulo, Contenedor_Hacienda, Contenedor_SAT
+from CONTENEDORES_DASHBOARD import CONTENEDOR_M, CONTENEDOR_PR, CONTENEDOR_QDNA
+from CONTENEDORES_DASHBOARD import ROLES_EMPLEADO, APLICATIVOS_RIESGOS, APP_SISTE_MAX
+from CONTENEDORES_DASHBOARD import DENUNCIAS_CONTE, DENUN_PTO, CONTE_CLASS_SUNTO
 
 
 #%%%%%%%%%%%%%%%% Funciones varias %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -201,6 +204,19 @@ UAD_DROP = st.sidebar.multiselect("Seleccionar por Unidad:",
                                    key='UAD_DROP'
                                    )
 
+#> Inicializar las variables para que estén accesibles fuera del bloque
+BASE_RIESGOS_UNIDAD = pd.DataFrame()
+BASE_DENUNCIAS_UNIDAD = pd.DataFrame()
+
+#> Verificar si se seleccionaron unidades
+if not UAD_DROP:
+    st.sidebar.warning("⚠️ No se han seleccionado datos")
+else:
+    #> Filtrar los DataFrames
+    BASE_RIESGOS_UNIDAD = BASE_RIESGO[BASE_RIESGO["UNIDAD"].isin(UAD_DROP)]
+    BASE_DENUNCIAS_UNIDAD = BASE_DENUNCIAS[BASE_DENUNCIAS["UNIDAD"].isin(UAD_DROP)]
+
+
 #> Espacio adicional para estética
 st.sidebar.write("") 
 st.sidebar.write("")  
@@ -220,17 +236,6 @@ with st.sidebar:
         st.cache_data.clear()  # Borra el caché de todas las funciones decoradas con @st.cache_data
         st.success("Información actualizada")                          
 
-#> Inicializar las variables para que estén accesibles fuera del bloque
-BASE_RIESGOS_UNIDAD = pd.DataFrame()
-BASE_DENUNCIAS_UNIDAD = pd.DataFrame()
-
-#> Verificar si se seleccionaron unidades
-if not UAD_DROP:
-    st.sidebar.warning("⚠️ No se han seleccionado datos")
-else:
-    #> Filtrar los DataFrames
-    BASE_RIESGOS_UNIDAD = BASE_RIESGO[BASE_RIESGO["UNIDAD"].isin(UAD_DROP)]
-    BASE_DENUNCIAS_UNIDAD = BASE_DENUNCIAS[BASE_DENUNCIAS["UNIDAD"].isin(UAD_DROP)]
 
 ####################################################
 
@@ -241,14 +246,14 @@ General_T, Riesgo_T, Aplica_T, Denuncia_T = st.tabs(["INFORMACIÓN GENERAL", "RI
 
 with General_T:
     st.success('INFORMACIÓN GENERAL')
-    st.markdown("""<p style="text-align: justify; font-size: 16px;">
-                    --->⚠️ Generar contenedor de información ⚠️<--- </p>""", 
-                    unsafe_allow_html = True)
-
     if BASE_RIESGOS_UNIDAD.empty:
         st.warning("No hay datos disponibles para la selección actual.")
 
     else:
+
+        Menu_conte = CONTENEDOR_M(BASE_RIESGOS_UNIDAD)
+        st.markdown(Menu_conte, unsafe_allow_html=True) 
+
         MENU_1, MENU_2 = st.columns([2, 2])
 
         with MENU_1:
@@ -261,13 +266,11 @@ with General_T:
 
         PUESTOS_RIESGO = BARRAS_MENU(BASE_RIESGOS_UNIDAD)
         st.plotly_chart(PUESTOS_RIESGO, use_container_width = True)
+  
 
 
 with Riesgo_T:
     st.success('RIESGO POR PUESTO')
-    st.markdown("""<p style="text-align: justify; font-size: 16px;">
-                    --->⚠️ Generar contenedor de información ⚠️<--- </p>""", unsafe_allow_html=True)
-
 
     if BASE_RIESGOS_UNIDAD.empty:
         st.warning("No hay datos disponibles para la selección actual.")
@@ -292,18 +295,22 @@ with Riesgo_T:
             
             METRIC_PT, METRIC_PR = st.columns(2)
             with METRIC_PT:
-                st.metric('Total Puestos', PUESTOS_T)
+                st.metric('Total de puestos', PUESTOS_T)
             with METRIC_PR:
-                st.metric('Total Puestos Riesgo', PUESTOS_R)
+                st.metric('Puestos de riesgo', PUESTOS_R)
 
             PTO_ADM_1, PTO_ADM_2 = st.columns([2,1])
             with PTO_ADM_1:
                 PUESTOS_RIESGO_DESCO = BARRAS_MENU(BASE_RIESGOS_DESCO)
                 st.plotly_chart(PUESTOS_RIESGO_DESCO, use_container_width = True)
             with PTO_ADM_2:
-                st.write('--->⚠️ Generar contenedor de información ⚠️<---')
+                Puesto_riesgo_conte = CONTENEDOR_PR(BASE_RIESGOS_DESCO)
+                st.markdown(Puesto_riesgo_conte, unsafe_allow_html=True) 
 
             st.success('CONFIABILIDAD, QUEJAS & DENUNCIAS Y NIVEL DE RIESGO')
+            
+            QDNA_CONTE = CONTENEDOR_QDNA(BASE_RIESGOS_DESCO)
+            st.markdown(QDNA_CONTE, unsafe_allow_html=True) 
             
             CON_QD_1, CON_QD_2 = st.columns([1,1])
             with CON_QD_1:
@@ -313,14 +320,13 @@ with Riesgo_T:
                 QUEJADENUN_DESCO = QUEJA_DENUNCIA (BASE_RIESGOS_DESCO)
                 st.plotly_chart(QUEJADENUN_DESCO, use_container_width = True)
 
-
             NIVEL_ATE_DESCO = RIESGO_ATENCION_NIVEL(BASE_RIESGOS_DESCO)
             st.plotly_chart(NIVEL_ATE_DESCO, use_container_width = True)
 
             st.success('DETALLES DE APLICATIVOS POR NIVEL DE RIESGO')
 
-            st.markdown("""<p style="text-align: justify; font-size: 16px;">
-                        La tabla muestra información detallada sobre los empleados clasificados con niveles de riesgo MEDIO, ALTO y CRÍTICO. 
+            st.markdown("""<p style="text-align: justify; font-size: 15px;">
+                        La tabla muestra información detallada sobre los empleados clasificados con niveles de riesgo <b>MEDIO, ALTO y CRÍTICO.</b> 
                         Incluye datos sobre los puestos que ocupan, los roles asignados, y los niveles de riesgo y atención asociados a cada 
                         puesto, basados en la desconcentrada seleccionada previamente.</p>""", unsafe_allow_html=True)
 
@@ -346,8 +352,6 @@ with Riesgo_T:
             Tabla_APP = APLICATIVOS_TABLA (DETALLE)
             st.plotly_chart(Tabla_APP, use_container_width=True)
 
-
-
             #> Filtro EMPLEADOS
             EMPLEA_APP = SISTEMA["NOMBRE_EMP"].unique().tolist()
             EMPLEA_APP_1 = EMPLEA_APP + ['TODOS']
@@ -361,17 +365,21 @@ with Riesgo_T:
                 EMPLEA_APP_DROP = EMPLEA_APP
             else:
                 EMPLEA_APP_DROP = [EMP for EMP in EMPLEA_APP_DROP if EMP in EMPLEA_APP]
-
+            
             EMPL_SISTEM = SISTEMA.query("NOMBRE_EMP == @EMPLEA_APP_DROP")
-            ACC_APP = ACCESOS_APP (EMPL_SISTEM)
-            st.plotly_chart(ACC_APP, use_container_width=True)
+
+            if EMPL_SISTEM.empty:
+                st.warning("NO HAY DATOS DISPONIBLES PARA LA SELECCIÓN ACTUAL.")
+            else:
+                EMPLE_ROLES_CON = ROLES_EMPLEADO(EMPL_SISTEM)
+                st.markdown(EMPLE_ROLES_CON, unsafe_allow_html=True) 
+
+                ACC_APP = ACCESOS_APP (EMPL_SISTEM)
+                st.plotly_chart(ACC_APP, use_container_width=True)
 
 
 with Aplica_T:
     st.success('RIESGO POR APLICATIVOS')
-    st.markdown("""<p style="text-align: justify; font-size: 16px">
-                    --->⚠️ Generar contenedor de información ⚠️<---</p>""", unsafe_allow_html=True)
-
 
     if BASE_RIESGOS_UNIDAD.empty:
         st.warning("No hay datos disponibles para la selección actual")
@@ -380,6 +388,11 @@ with Aplica_T:
 
         APP_TOT = APLICATIVOS_TOTAL(BASE_RIESGOS_UNIDAD)
         st.plotly_chart(APP_TOT, use_container_width=True)
+
+
+        CONTE_APP_R = APLICATIVOS_RIESGOS(BASE_RIESGOS_UNIDAD)
+        st.markdown(CONTE_APP_R, unsafe_allow_html=True) 
+
 
         APP_PTO = APLICATIVOS_PUESTOS (BASE_RIESGOS_UNIDAD)
         st.plotly_chart(APP_PTO, use_container_width=True)
@@ -395,9 +408,15 @@ with Aplica_T:
 
         BASE_RIESGOS_APP = BASE_RIESGOS_UNIDAD.query("DESCONCENTRADA == @DESCO_APP")
 
+
         if BASE_RIESGOS_APP.empty:
             st.warning("No hay datos disponibles para la selección actual")
         else:
+            
+            MAX_SIS_APP = APP_SISTE_MAX (BASE_RIESGOS_APP)
+            st.markdown(MAX_SIS_APP, unsafe_allow_html=True) 
+
+
             MAYOR_SIS = MAYOR_SISTEMAS(BASE_RIESGOS_APP)
             st.plotly_chart(MAYOR_SIS, use_container_width=True)
             
@@ -405,6 +424,12 @@ with Aplica_T:
             st.plotly_chart(MAYOR_APP, use_container_width=True)
 
         st.success('DETALLES DE APLICATIVOS POR UNIDAD, PUESTO Y EMPLEADO')
+
+        st.markdown("""<p style="text-align: justify; font-size: 16px;">
+                        La tabla detalla información clave sobre los empleados, sus puestos, los aplicativos asignados, 
+                        el número de roles por aplicativo y el alcance de su uso. Para facilitar un análisis más profundo, 
+                        los datos pueden filtrarse por <b>PUESTO</b> y <b>EMPLEADO</b> , además de estar disponibles para descarga en 
+                        formato <b>Excel (.xlsx)</b>.</p>""", unsafe_allow_html=True)
 
         PTO_1, EMPLE_1 = st.columns([1,1])
         with PTO_1:
@@ -448,29 +473,33 @@ with Aplica_T:
 
 with Denuncia_T:
     st.success('DETALLE DE LAS DENUNCIAS')
-    st.markdown("""<p style="text-align: justify; font-size: 16px">
-                    --->⚠️ Generar contenedor de información ⚠️<---</p>""", unsafe_allow_html=True)
-
 
     if BASE_DENUNCIAS_UNIDAD.empty:
         st.warning("No hay datos disponibles para la selección actual")
     else:
 
-        FOLIOS, ASUNTOS, DENUNCIA_QUEJA, PUESTOS = DENUNCIAS_INFO(BASE_DENUNCIAS_UNIDAD)
+        CONTE_DENUN = DENUNCIAS_CONTE(BASE_DENUNCIAS_UNIDAD)
+        st.markdown(CONTE_DENUN, unsafe_allow_html=True) 
 
-        FOL, VEL = st.columns([0.25, 2.5])
-        with FOL:
-            st.metric('Folios SIDEQUS', FOLIOS)
-        with VEL:
-            VELO_INFO = VEL_DENU(DENUNCIA_QUEJA)
-            st.plotly_chart(VELO_INFO, use_container_width=True)
+        ASUNTOS, DENUNCIA_QUEJA, PUESTOS = DENUNCIAS_INFO(BASE_DENUNCIAS_UNIDAD)
+
+        VELO_INFO = VEL_DENU(DENUNCIA_QUEJA)
+        st.plotly_chart(VELO_INFO, use_container_width=True)
 
         
-        PTO_DEN, CLAS_TO = st.columns(2)
+        PTO_DEN, PTO_DEN_C = st.columns([2,1.5])
         with PTO_DEN:
             PUESTO_DENU = DENUNCIAS_PUESTOS(PUESTOS)
             st.plotly_chart(PUESTO_DENU, use_container_width=True)
-        with CLAS_TO:
+        with PTO_DEN_C:
+            DEN_PUESTO = DENUN_PTO(BASE_DENUNCIAS_UNIDAD)
+            st.markdown(DEN_PUESTO, unsafe_allow_html=True) 
+
+        CLAS_DEN, GRAP_DENC = st.columns([1.5,2])
+        with CLAS_DEN:
+            CLAS_DENU = CONTE_CLASS_SUNTO(BASE_DENUNCIAS_UNIDAD)
+            st.markdown(CLAS_DENU, unsafe_allow_html=True)
+        with GRAP_DENC:
             DENUN_CL = CLASES_DENUNCIAS (ASUNTOS)
             st.plotly_chart(DENUN_CL, use_container_width=True)
             

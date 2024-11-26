@@ -208,7 +208,7 @@ def CONFIABILIDAD(Tabla):
     """Genera una gráfica de funnel para datos de confiabilidad."""
     #> Agrupación de datos
     confiabilidad_data = (Tabla.groupby('PREVE_OBS')['EMPLEADO'].nunique().reset_index().sort_values(by = 'EMPLEADO', 
-                                                                                                     ascending = True)
+                                                                                                     ascending = False)
     )
 
     cmap = mcolors.LinearSegmentedColormap.from_list("", ['#630d32',
@@ -460,8 +460,14 @@ def ACCESOS_APP(Tabla):
     cmap = mcolors.LinearSegmentedColormap.from_list("", ['#630d32', '#b18f5f', '#6f6f71'])
     
     num_apps = len(Tabla)
-    colors = [mcolors.to_hex(cmap(i / (num_apps - 1))) for i in range(num_apps)]
+
+    #> Configuración de colores
+    if num_apps > 1:
+        colors = [mcolors.to_hex(cmap(i/(num_apps -1))) for i in range(num_apps)]
+    else:
+        colors = [mcolors.to_hex(cmap(0))]
     
+
     max_value = Tabla['ROL_APP'].max()
     
     pull_values = [0.05 if val > 0.80 * max_value else 0 for val in Tabla['ROL_APP']]
@@ -546,7 +552,7 @@ def APLICATIVOS_TOTAL(Tabla):
                                          categoryorder = 'total descending'
                                          ),
                             margin = dict(r = 10, t = 10, l = 10, b = 10),
-                            legend = dict(title = dict(text = 'Desconcentrada', font = dict(size = 12, color = "#000000")),
+                            legend = dict(title = dict(text = 'Administración', font = dict(size = 12, color = "#000000")),
                                           orientation = "h",
                                           yanchor = "top",
                                           y = -0.1,
@@ -771,7 +777,7 @@ def TABLA_APPS(Tabla):
         tabla.columns = nuevos_nombres
         return tabla
     
-    nuevos_nombres = ['Nombre Empleado', 'RFC corto', 'Puesto', 'Aplicativo', 'ROL', 'Alcance ROL']
+    nuevos_nombres = ['Nombre Empleado', 'RFC Corto', 'Puesto', 'Aplicativo', 'ROL', 'Alcance ROL']
 
     TB = Tabla.groupby(['NOMBRE_EMP','RFC_CORTO','PUESTO_NOM',
                         'APLICATIVO', 'ROL_APP', 'ALCANCE_ROL'])['PTO_RIESGO'].nunique()\
@@ -792,7 +798,7 @@ def TABLA_APPS(Tabla):
     for i, row in grouped.iterrows():
         num_roles = len(row['Puesto'])
         nombre_emp.extend([row['Nombre Empleado']] + [''] * (num_roles - 1))
-        rfc_corto.extend([row['RFC corto'][0]] + [''] * (num_roles - 1))
+        rfc_corto.extend([row['RFC Corto'][0]] + [''] * (num_roles - 1))
         puesto_nom.extend(row['Puesto'])
         aplicativo.extend(row['Aplicativo'])
         rol_app.extend(row['ROL'])
@@ -929,7 +935,7 @@ def DENUNCIAS_PUESTOS(Tabla):
                                       visible = True,
                                       categoryorder = 'total descending'
                                       ),
-                         yaxis = dict(title = dict(text = "No. Empleados",
+                         yaxis = dict(title = dict(text = "No. Folios",
                                                    font = dict(size = 13, color="#000000") 
                                                    ),
                                       showticklabels=False,
